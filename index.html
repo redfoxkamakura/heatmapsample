@@ -4,22 +4,22 @@
     <title>Google Maps API v3 HeatmapLayerの技術検証</title>
     <meta charset="utf-8"/>
     <!-- bin/jquery.slider.min.css -->
-  	<link rel="stylesheet" href="css/jslider.css" type="text/css">
-  	<link rel="stylesheet" href="css/jslider.blue.css" type="text/css">
-  	<link rel="stylesheet" href="css/jslider.plastic.css" type="text/css">
-  	<link rel="stylesheet" href="css/jslider.round.css" type="text/css">
-  	<link rel="stylesheet" href="css/jslider.round.plastic.css" type="text/css">
+    <link rel="stylesheet" href="css/jslider.css" type="text/css">
+    <link rel="stylesheet" href="css/jslider.blue.css" type="text/css">
+    <link rel="stylesheet" href="css/jslider.plastic.css" type="text/css">
+    <link rel="stylesheet" href="css/jslider.round.css" type="text/css">
+    <link rel="stylesheet" href="css/jslider.round.plastic.css" type="text/css">
     <!-- end -->
 
-  	<script type="text/javascript" src="js/jquery-1.7.1.js"></script>
+    <script type="text/javascript" src="js/jquery-1.7.1.js"></script>
 
-  	<!-- bin/jquery.slider.min.js -->
-  	<script type="text/javascript" src="js/jshashtable-2.1_src.js"></script>
-  	<script type="text/javascript" src="js/jquery.numberformatter-1.2.3.js"></script>
-  	<script type="text/javascript" src="js/tmpl.js"></script>
-  	<script type="text/javascript" src="js/jquery.dependClass-0.1.js"></script>
-  	<script type="text/javascript" src="js/draggable-0.1.js"></script>
-  	<script type="text/javascript" src="js/jquery.slider.js"></script>
+    <!-- bin/jquery.slider.min.js -->
+    <script type="text/javascript" src="js/jshashtable-2.1_src.js"></script>
+    <script type="text/javascript" src="js/jquery.numberformatter-1.2.3.js"></script>
+    <script type="text/javascript" src="js/tmpl.js"></script>
+    <script type="text/javascript" src="js/jquery.dependClass-0.1.js"></script>
+    <script type="text/javascript" src="js/draggable-0.1.js"></script>
+    <script type="text/javascript" src="js/jquery.slider.js"></script>
     <!-- end -->
     <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?sensor=false&v=3&language=ja&libraries=visualization"></script>
     <script type="text/javascript">
@@ -126,7 +126,7 @@
             heatmapData.push({
               location: pos,
               weight: data[key].time_m
-            });
+            });            
             bounds.extend(pos);
           } else {
             if (from <= dateBefore && dateBefore <= to) {
@@ -139,7 +139,7 @@
             }
           }
         }
-
+        
         heatmap = new google.maps.visualization.HeatmapLayer();
         heatmap.setData(heatmapData);
         heatmap.set('radius', 40);
