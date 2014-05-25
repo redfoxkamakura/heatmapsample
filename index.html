@@ -1,79 +1,196 @@
 <!DOCTYPE html>
 <html>
-
   <head>
-    <meta charset='utf-8' />
-    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="Heatmapsample : " />
+    <title>Google Maps API v3 HeatmapLayerの技術検証</title>
+    <meta charset="utf-8"/>
+    <!-- bin/jquery.slider.min.css -->
+  	<link rel="stylesheet" href="css/jslider.css" type="text/css">
+  	<link rel="stylesheet" href="css/jslider.blue.css" type="text/css">
+  	<link rel="stylesheet" href="css/jslider.plastic.css" type="text/css">
+  	<link rel="stylesheet" href="css/jslider.round.css" type="text/css">
+  	<link rel="stylesheet" href="css/jslider.round.plastic.css" type="text/css">
+    <!-- end -->
 
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+  	<script type="text/javascript" src="js/jquery-1.7.1.js"></script>
 
-    <title>Heatmapsample</title>
+  	<!-- bin/jquery.slider.min.js -->
+  	<script type="text/javascript" src="js/jshashtable-2.1_src.js"></script>
+  	<script type="text/javascript" src="js/jquery.numberformatter-1.2.3.js"></script>
+  	<script type="text/javascript" src="js/tmpl.js"></script>
+  	<script type="text/javascript" src="js/jquery.dependClass-0.1.js"></script>
+  	<script type="text/javascript" src="js/draggable-0.1.js"></script>
+  	<script type="text/javascript" src="js/jquery.slider.js"></script>
+    <!-- end -->
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?sensor=false&v=3&language=ja&libraries=visualization"></script>
+    <script type="text/javascript">
+
+      // 各会社のスポット座標
+      var company = {
+        pos1: [35.6195, 139.6117],
+        pos2: [35.6295, 139.6217],
+        pos3: [35.6395, 139.6317],
+        pos4: [35.6495, 139.6417],
+        pos5: [35.6595, 139.6517]
+      }
+
+      // data
+      // 　要素名：YYYYMMDD_営業マンx_地点x
+      // 　要素　：pos　地点の座標
+      //　　　　　：num　滞在していた時間(minues)
+      var data = {};
+
+      // 営業マン1の20140401の行動履歴
+      data['20140401_1_1'] = {pos: company['pos1'], time_m: 60};
+      data['20140401_1_4'] = {pos: company['pos4'], time_m: 30};
+
+      // 営業マン1の20140402の行動履歴
+      data['20140402_1_1'] = {pos: company['pos1'], time_m: 60};
+      data['20140402_1_3'] = {pos: company['pos3'], time_m: 90};
+      data['20140402_1_4'] = {pos: company['pos4'], time_m: 30};
+
+      // 営業マン1の20140403の行動履歴
+      data['20140403_1_1'] = {pos: company['pos1'], time_m: 60};
+      data['20140403_1_2'] = {pos: company['pos2'], time_m: 10};
+      data['20140403_1_3'] = {pos: company['pos3'], time_m: 90};
+      data['20140403_1_4'] = {pos: company['pos4'], time_m: 30};
+
+      // 営業マン1の20140404の行動履歴
+      data['20140404_1_2'] = {pos: company['pos2'], time_m: 10};
+      data['20140404_1_3'] = {pos: company['pos3'], time_m: 90};
+
+      // 営業マン1の20140405の行動履歴
+      data['20140405_1_1'] = {pos: company['pos1'], time_m: 60};
+      data['20140405_1_5'] = {pos: company['pos5'], time_m: 5};
+
+
+      // 営業マン1の20140405の行動履歴
+      data['20140406_1_1'] = {pos: company['pos1'], time_m: 60};
+      data['20140406_1_5'] = {pos: company['pos5'], time_m: 5};
+
+      // 営業マン1の20140405の行動履歴
+      data['20140407_1_1'] = {pos: company['pos1'], time_m: 60};
+
+
+      var mapCanvas;
+      var heatmap;
+      var marker;
+      var bounds;
+
+      function initialize() {
+
+        var initPos = new google.maps.LatLng(35.658613, 139.745525);
+        var mapOptions = {
+          mapTypeId : google.maps.MapTypeId.ROADMAP
+        };
+
+        var mapDiv = document.getElementById("map_canvas");
+        mapCanvas = new google.maps.Map(mapDiv, mapOptions);
+
+        bounds = new google.maps.LatLngBounds();
+        createHeatmap(); // ヒートマップ
+        mapCanvas.fitBounds(bounds);
+
+        // 各社にマーカー建てる
+        for (key in company) {
+          var pos = new google.maps.LatLng(company[key][0], company[key][1]);
+          var marker = new google.maps.Marker({
+            position: pos,
+            map: mapCanvas
+          });
+
+          new google.maps.InfoWindow({
+            content: key
+          }).open(marker.getMap(), marker);
+        }
+      }
+
+      google.maps.event.addDomListener(window, "load", initialize);
+
+      function createHeatmap(from, to) {
+        var key, pos, heatmapData = [];
+        var today = '20140408';　// new date();
+
+        if (heatmap) {
+          heatmap.setMap(null);
+        }
+
+        if(typeof from === 'undefined') from = null;
+        if(typeof to   === 'undefined') to   = null;
+
+        for (key in data) {
+          var dateData = key.substring(0,8); // 要素名の日付の部分だけ抽出
+          var dateBefore = today - dateData;
+
+          if (from === null || to === null) {
+            var pos = new google.maps.LatLng(data[key].pos[0], data[key].pos[1]);
+            heatmapData.push({
+              location: pos,
+              weight: data[key].time_m
+            });
+            bounds.extend(pos);
+          } else {
+            if (from <= dateBefore && dateBefore <= to) {
+              var pos = new google.maps.LatLng(data[key].pos[0], data[key].pos[1]);
+              heatmapData.push({
+                location: pos,
+                weight: data[key].time_m
+              });
+              bounds.extend(pos);
+            }
+          }
+        }
+
+        heatmap = new google.maps.visualization.HeatmapLayer();
+        heatmap.setData(heatmapData);
+        heatmap.set('radius', 40);
+        heatmap.setMap(mapCanvas);
+      }
+
+    </script>
+
+    <style type="text/css">
+      html,body {
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+      }
+      #map_canvas {
+        float: left;
+        height:100%;
+        width: 80%;
+      }
+    </style>
   </head>
 
   <body>
+    <div id="map_canvas"></div>
 
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/redfoxkamakura/heatmapsample">View on GitHub</a>
-
-          <h1 id="project_title">Heatmapsample</h1>
-          <h2 id="project_tagline"></h2>
-
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/redfoxkamakura/heatmapsample/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/redfoxkamakura/heatmapsample/tarball/master">Download this project as a tar.gz file</a>
-            </section>
-        </header>
+    <div class="layout-slider" style="width: 100%; margin-top: 15px">
+      期間：<br/><span style="display: inline-block; width: 15%; padding: 0 5px;"><input id="Slider1" type="slider" name="term" value="1;7" /></span>  <br/><span style="float: right; margin-right: 10px">日前<span>
     </div>
-
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
-        <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
-
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
-
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
-</code></pre>
-
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
-
-<h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
-
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
-
-<h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
-
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
-
-<h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
-
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
-
-<h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
-
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
-      </section>
-    </div>
-
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">Heatmapsample maintained by <a href="https://github.com/redfoxkamakura">redfoxkamakura</a></p>
-        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
-      </footer>
-    </div>
-
-    
+    <ul style="padding: 30px; list-style-type: disc; font-size: 12px">
+      <li>スライダーよりカレンダーで日付範囲指定のほうが良い？（カレンダーで日付指定、検索の手間を減らしたい）</li>
+      <li>訪問時間をグラフでもほしい(D3)？</li>
+    </ul>
+    <script type="text/javascript" charset="utf-8">
+      $("#Slider1").slider({
+        from: 1,
+        to: 7,
+        step: 1,
+        smooth: true,
+        round: 1,
+        dimension: " ",
+        skin: "plastic",
+        callback: function(value){
+          var term = value.split(';');
+          var from = term[0];
+          var to   = term[1];
+          createHeatmap(from, to);
+        }
+      });
+    </script>
 
   </body>
+
 </html>
