@@ -78,49 +78,6 @@
 
       function initialize() {
 
-        var initPos = new google.maps.LatLng(35.658613, 139.745525);
-        var mapOptions = {
-          mapTypeId : google.maps.MapTypeId.ROADMAP
-        };
-
-        var mapDiv = document.getElementById("map_canvas");
-        mapCanvas = new google.maps.Map(mapDiv, mapOptions);
-
-        bounds = new google.maps.LatLngBounds();
-        createHeatmap(); // ヒートマップ
-        mapCanvas.fitBounds(bounds);
-
-        // 各社にマーカー建てる
-        for (key in company) {
-          var pos = new google.maps.LatLng(company[key][0], company[key][1]);
-          var marker = new google.maps.Marker({
-            position: pos,
-            map: mapCanvas
-          });
-
-          new google.maps.InfoWindow({
-            content: key
-          }).open(marker.getMap(), marker);
-        }
-      }
-
-      google.maps.event.addDomListener(window, "load", initialize);
-
-      function createHeatmap(from, to) {
-        var key, pos, heatmapData = [];
-        var today = '20140408';　// new date();
-
-        if (heatmap) {
-          heatmap.setMap(null);
-        }
-
-        if(typeof from === 'undefined') from = null;
-        if(typeof to   === 'undefined') to   = null;
-
-        for (key in data) {
-          var dateData = key.substring(0,8); // 要素名の日付の部分だけ抽出
-          var dateBefore = today - dateData;
-
           if (from === null || to === null) {
             var pos = new google.maps.LatLng(data[key].pos[0], data[key].pos[1]);
             heatmapData.push({
@@ -145,52 +102,6 @@
         heatmap.set('radius', 40);
         heatmap.setMap(mapCanvas);
       }
-
-    </script>
-
-    <style type="text/css">
-      html,body {
-        width: 100%;
-        height: 100%;
-        padding: 0;
-        margin: 0;
-      }
-      #map_canvas {
-        float: left;
-        height:100%;
-        width: 80%;
-      }
-    </style>
-  </head>
-
-  <body>
-    <div id="map_canvas"></div>
-
-    <div class="layout-slider" style="width: 100%; margin-top: 15px">
-      期間：<br/><span style="display: inline-block; width: 15%; padding: 0 5px;"><input id="Slider1" type="slider" name="term" value="1;7" /></span>  <br/><span style="float: right; margin-right: 10px">日前<span>
-    </div>
-    <ul style="padding: 30px; list-style-type: disc; font-size: 12px">
-      <li>スライダーよりカレンダーで日付範囲指定のほうが良い？（カレンダーで日付指定、検索の手間を減らしたい）</li>
-      <li>訪問時間をグラフでもほしい(D3)？</li>
-    </ul>
-    <script type="text/javascript" charset="utf-8">
-      $("#Slider1").slider({
-        from: 1,
-        to: 7,
-        step: 1,
-        smooth: true,
-        round: 1,
-        dimension: " ",
-        skin: "plastic",
-        callback: function(value){
-          var term = value.split(';');
-          var from = term[0];
-          var to   = term[1];
-          createHeatmap(from, to);
-        }
-      });
-    </script>
-
   </body>
-
 </html>
+
